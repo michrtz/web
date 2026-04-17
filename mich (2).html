@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mich — Crypto × AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400;1,500&family=Syne:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050508;
+    --surface: #0b0b10;
+    --text: #f0efe8;
+    --text-secondary: #7a7870;
+    --text-dim: #33322e;
+    --accent: #00e5a0;
+    --accent-blue: #0088ff;
+    --accent-glow: rgba(0, 229, 160, 0.15);
+    --border: rgba(255,255,255,0.06);
+    --display: 'Playfair Display', Georgia, serif;
+    --heading: 'Syne', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--heading);
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ═══ NEURAL CANVAS ═══ */
+  #neural {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ═══ GRAIN OVERLAY ═══ */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    pointer-events: none;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* ═══ NAV ═══ */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 28px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(30px) saturate(1.2);
+    background: rgba(5, 5, 8, 0.5);
+  }
+
+  .logo {
+    font-family: var(--heading);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); font-weight: 400; }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute;
+    bottom: -4px; left: 0;
+    width: 0; height: 1px;
+    background: var(--accent);
+    transition: width 0.3s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-links a:hover::after { width: 100%; }
+
+  /* ═══ HERO ═══ */
+  .hero {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 56px;
+    max-width: 1100px;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 40px;
+    opacity: 0;
+    animation: slideUp 0.8s ease forwards 0.2s;
+  }
+  .hero-eyebrow::before {
+    content: '—— ';
+    opacity: 0.4;
+  }
+
+  .hero h1 {
+    font-family: var(--display);
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -2px;
+    margin-bottom: 36px;
+    opacity: 0;
+    animation: slideUp 0.8s ease forwards 0.4s;
+  }
+  .hero h1 i {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    max-width: 480px;
+    line-height: 1.75;
+    margin-bottom: 52px;
+    opacity: 0;
+    animation: slideUp 0.8s ease forwards 0.6s;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    opacity: 0;
+    animation: slideUp 0.8s ease forwards 0.8s;
+  }
+
+  .btn-primary {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 16px 36px;
+    background: var(--accent);
+    color: var(--bg);
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-primary:hover {
+    box-shadow: 0 0 50px rgba(0, 229, 160, 0.25);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 16px 36px;
+    background: transparent;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+  .btn-outline:hover {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  /* ═══ SECTIONS ═══ */
+  .section {
+    position: relative;
+    z-index: 1;
+    max-width: 1100px;
+    padding: 120px 56px;
+  }
+
+  .section-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--accent);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 56px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .section-tag::before {
+    content: '';
+    width: 32px; height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+
+  /* ═══ ABOUT ═══ */
+  .about-content {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .about-headline {
+    font-family: var(--display);
+    font-size: clamp(28px, 3.5vw, 44px);
+    font-weight: 400;
+    line-height: 1.3;
+    letter-spacing: -1px;
+  }
+  .about-headline i {
+    font-style: italic;
+    color: var(--text-secondary);
+  }
+
+  .about-body p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.85;
+    font-weight: 400;
+  }
+  .about-body p + p { margin-top: 20px; }
+
+  .metrics {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 64px;
+    margin-top: 72px;
+    padding-top: 56px;
+    border-top: 1px solid var(--border);
+  }
+
+  .metric-val {
+    font-family: var(--display);
+    font-size: 56px;
+    font-weight: 400;
+    background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+  }
+  .metric-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 10px;
+  }
+
+  /* ═══ PROJECTS ═══ */
+  .projects-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .project-row {
+    display: grid;
+    grid-template-columns: 140px 1fr 1.2fr auto;
+    gap: 32px;
+    align-items: center;
+    padding: 36px 0;
+    border-bottom: 1px solid var(--border);
+    transition: all 0.35s ease;
+    cursor: default;
+    position: relative;
+  }
+  .project-row:first-child {
+    border-top: 1px solid var(--border);
+  }
+  .project-row::before {
+    content: '';
+    position: absolute;
+    inset: 0 -56px;
+    background: var(--accent-glow);
+    opacity: 0;
+    transition: opacity 0.35s;
+    z-index: -1;
+  }
+  .project-row:hover::before { opacity: 1; }
+  .project-row:hover .proj-name { color: var(--accent); }
+
+  .proj-cat {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .proj-name {
+    font-family: var(--display);
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    transition: color 0.3s;
+  }
+  .proj-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+  }
+  .proj-tech {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .proj-tech span {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  /* ═══ CONTACT ═══ */
+  .contact-inner {
+    text-align: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .contact-heading {
+    font-family: var(--display);
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 400;
+    letter-spacing: -1.5px;
+    line-height: 1.15;
+    margin-bottom: 20px;
+  }
+  .contact-heading i {
+    font-style: italic;
+    background: linear-gradient(135deg, var(--accent), var(--accent-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .contact-sub {
+    font-size: 15px;
+    color: var(--text-secondary);
+    margin-bottom: 48px;
+    line-height: 1.7;
+  }
+
+  .contact-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .contact-row a {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 14px 24px;
+    border: 1px solid var(--border);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+  }
+  .contact-row a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+    box-shadow: 0 0 30px rgba(0, 229, 160, 0.08);
+  }
+
+  /* ═══ FOOTER ═══ */
+  footer {
+    position: relative;
+    z-index: 1;
+    border-top: 1px solid var(--border);
+    padding: 28px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  footer span {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ═══ ANIMATIONS ═══ */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(36px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ═══ RESPONSIVE ═══ */
+  @media (max-width: 900px) {
+    nav { padding: 20px 28px; }
+    .hero, .section { padding-left: 28px; padding-right: 28px; }
+    .about-content { grid-template-columns: 1fr; gap: 40px; }
+    .metrics { flex-direction: column; gap: 32px; }
+    .project-row {
+      grid-template-columns: 1fr;
+      gap: 8px;
+      padding: 28px 0;
+    }
+    .proj-tech { justify-content: flex-start; }
+    .nav-links { gap: 20px; }
+    .hero-actions { flex-direction: column; width: fit-content; }
+    footer { padding: 24px 28px; flex-direction: column; gap: 8px; }
+    .contact-row { flex-direction: column; align-items: center; }
+  }
+
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="neural"></canvas>
+
+<!-- Nav -->
+<nav>
+  <a href="#" class="logo">Mich<span>.</span></a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-eyebrow">Crypto Researcher & AI Builder</div>
+  <h1>Where <i>crypto</i><br>meets <i>AI.</i></h1>
+  <p class="hero-sub">A decade in the decentralized frontier. Now building intelligent systems at the convergence of blockchain and artificial intelligence.</p>
+  <div class="hero-actions">
+    <a href="#projects" class="btn-primary">Explore Work</a>
+    <a href="#contact" class="btn-outline">Say Hello</a>
+  </div>
+</div>
+
+<!-- About -->
+<div class="section" id="about">
+  <div class="section-tag reveal">About</div>
+  <div class="about-content">
+    <div class="about-headline reveal">
+      10+ years deep in <i>crypto.</i> Now converging with <i>artificial intelligence.</i>
+    </div>
+    <div class="about-body reveal">
+      <p>From the early Bitcoin days through DeFi summer and into the modular blockchain era — I've researched, built, and invested across every major cycle.</p>
+      <p>Today, the most compelling frontier sits at the intersection of crypto and AI: autonomous agents, intelligent DeFi analytics, and AI-powered infrastructure for the decentralized web.</p>
+      <p>Based in Indonesia. Building tools that bridge both worlds.</p>
+    </div>
+    <div class="metrics reveal">
+      <div>
+        <div class="metric-val">10+</div>
+        <div class="metric-label">Years in Crypto</div>
+      </div>
+      <div>
+        <div class="metric-val">15+</div>
+        <div class="metric-label">Projects Shipped</div>
+      </div>
+      <div>
+        <div class="metric-val">AI</div>
+        <div class="metric-label">Current Focus</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Projects -->
+<div class="section" id="projects">
+  <div class="section-tag reveal">Selected Projects</div>
+  <div class="projects-list">
+
+    <div class="project-row reveal">
+      <div class="proj-cat">AI × Chat</div>
+      <div class="proj-name">AI Telegram Bot</div>
+      <div class="proj-desc">Claude-powered bot with vision, memory, real-time crypto prices & Solana token data</div>
+      <div class="proj-tech"><span>Claude</span><span>Node.js</span><span>Telegram</span></div>
+    </div>
+
+    <div class="project-row reveal">
+      <div class="proj-cat">DeFi</div>
+      <div class="proj-name">Solana Wallet Tracker</div>
+      <div class="proj-desc">Real-time portfolio analytics, token balances & transaction history via Helius API</div>
+      <div class="proj-tech"><span>Solana</span><span>Helius</span><span>Firebase</span></div>
+    </div>
+
+    <div class="project-row reveal">
+      <div class="proj-cat">Trading</div>
+      <div class="proj-name">#Tanya Aldo</div>
+      <div class="proj-desc">DEX price alert tracker with ±10% alerts, volume analysis & TA entry points</div>
+      <div class="proj-tech"><span>DexScreener</span><span>WebSocket</span></div>
+    </div>
+
+    <div class="project-row reveal">
+      <div class="proj-cat">AI × Trading</div>
+      <div class="proj-name">Solana AI Trading Bot</div>
+      <div class="proj-desc">AI-driven DCA limit order simulation with live market data integration</div>
+      <div class="proj-tech"><span>Solana</span><span>AI/ML</span><span>DCA</span></div>
+    </div>
+
+    <div class="project-row reveal">
+      <div class="proj-cat">AI × News</div>
+      <div class="proj-name">News Digest Bot</div>
+      <div class="proj-desc">Multi-source aggregation with AI summarization — RSS, Twitter, Reddit feeds</div>
+      <div class="proj-tech"><span>RSS</span><span>AI</span><span>Telegram</span></div>
+    </div>
+
+    <div class="project-row reveal">
+      <div class="proj-cat">SaaS</div>
+      <div class="proj-name">wash.id</div>
+      <div class="proj-desc">Full-stack laundry management — orders, invoices, payments & revenue tracking</div>
+      <div class="proj-tech"><span>Firebase</span><span>Vercel</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Contact -->
+<div class="section" id="contact">
+  <div class="section-tag reveal" style="justify-content:center;">Connect</div>
+  <div class="contact-inner">
+    <h2 class="contact-heading reveal">Let's build<br>the <i>future.</i></h2>
+    <p class="contact-sub reveal">Open for collaborations, research partnerships, and interesting conversations.</p>
+    <div class="contact-row reveal">
+      <a href="https://x.com/" target="_blank">Twitter</a>
+      <a href="https://t.me/" target="_blank">Telegram</a>
+      <a href="https://github.com/" target="_blank">GitHub</a>
+      <a href="mailto:hello@michstev.xyz">Email</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <span>© 2026 Mich</span>
+  <span>Crypto × AI</span>
+</footer>
+
+<script>
+// ═══ NEURAL NETWORK ANIMATION ═══
+const c = document.getElementById('neural');
+const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+
+if (gl) {
+  // WebGL neural mesh
+  let W, H;
+  function resize() {
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+    gl.viewport(0, 0, W, H);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const vsSource = `
+    attribute vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); gl_PointSize = 2.0; }
+  `;
+
+  const fsSource = `
+    precision mediump float;
+    uniform float u_time;
+    uniform vec2 u_res;
+    uniform vec2 u_mouse;
+
+    // Simplex-like hash
+    vec2 hash(vec2 p) {
+      p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+      return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+    }
+
+    float noise(vec2 p) {
+      vec2 i = floor(p);
+      vec2 f = fract(p);
+      vec2 u = f * f * (3.0 - 2.0 * f);
+      return mix(mix(dot(hash(i), f),
+                     dot(hash(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+                 mix(dot(hash(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+                     dot(hash(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
+    }
+
+    void main() {
+      vec2 uv = gl_FragCoord.xy / u_res;
+      vec2 p = uv * 2.0 - 1.0;
+      p.x *= u_res.x / u_res.y;
+
+      // Neural flow field
+      float t = u_time * 0.15;
+      float n1 = noise(p * 1.8 + t * 0.5);
+      float n2 = noise(p * 3.2 - t * 0.3 + vec2(5.0));
+      float n3 = noise(p * 5.0 + t * 0.2 + vec2(10.0));
+
+      // Flowing lines
+      float lines = 0.0;
+      for (float i = 0.0; i < 6.0; i++) {
+        float angle = n1 * 6.28 + i * 1.047;
+        vec2 dir = vec2(cos(angle), sin(angle));
+        float wave = sin(dot(p, dir) * (4.0 + i) + t * (0.5 + i * 0.1) + n2 * 3.0);
+        lines += smoothstep(0.0, 0.02, abs(wave) * (0.3 + n3 * 0.2)) * 0.0;
+        lines += (1.0 - smoothstep(0.0, 0.008, abs(wave))) * 0.12;
+      }
+
+      // Node points
+      float nodes = 0.0;
+      for (float i = 0.0; i < 20.0; i++) {
+        vec2 np = hash(vec2(i * 13.7, i * 7.3)) * 1.5;
+        np += vec2(sin(t + i), cos(t * 0.7 + i * 2.0)) * 0.3;
+        float d = length(p - np);
+        nodes += smoothstep(0.025, 0.0, d) * 0.6;
+        // Glow
+        nodes += smoothstep(0.15, 0.0, d) * 0.03;
+      }
+
+      // Mouse interaction
+      vec2 mp = u_mouse / u_res * 2.0 - 1.0;
+      mp.x *= u_res.x / u_res.y;
+      float md = length(p - mp);
+      float mouseGlow = smoothstep(0.6, 0.0, md) * 0.08;
+
+      // Colors
+      vec3 colAccent = vec3(0.0, 0.9, 0.63);  // #00e5a0
+      vec3 colBlue = vec3(0.0, 0.53, 1.0);     // #0088ff
+      vec3 colMix = mix(colAccent, colBlue, uv.x * 0.6 + n1 * 0.4);
+
+      float intensity = lines + nodes + mouseGlow;
+      vec3 col = colMix * intensity;
+
+      // Vignette
+      float vig = 1.0 - length(uv - 0.5) * 0.9;
+      col *= vig;
+
+      // Subtle base
+      col += vec3(0.01, 0.01, 0.015);
+
+      gl_FragColor = vec4(col, 1.0);
+    }
+  `;
+
+  function createShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(s));
+      gl.deleteShader(s);
+      return null;
+    }
+    return s;
+  }
+
+  const vs = createShader(gl.VERTEX_SHADER, vsSource);
+  const fs = createShader(gl.FRAGMENT_SHADER, fsSource);
+  const prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  // Full-screen quad
+  const quad = new Float32Array([-1,-1, 1,-1, -1,1, 1,1]);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  const posLoc = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uRes = gl.getUniformLocation(prog, 'u_res');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+  let mx = W * 0.5, my = H * 0.5;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = H - e.clientY; });
+
+  function render(t) {
+    gl.uniform1f(uTime, t * 0.001);
+    gl.uniform2f(uRes, W, H);
+    gl.uniform2f(uMouse, mx, my);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+
+} else {
+  // Canvas 2D fallback
+  const ctx = c.getContext('2d');
+  let W2, H2;
+  function resize2() { W2 = c.width = innerWidth; H2 = c.height = innerHeight; }
+  resize2();
+  addEventListener('resize', resize2);
+
+  const nodes = [];
+  for (let i = 0; i < 60; i++) {
+    nodes.push({
+      x: Math.random() * innerWidth,
+      y: Math.random() * innerHeight,
+      vx: (Math.random() - 0.5) * 0.4,
+      vy: (Math.random() - 0.5) * 0.4,
+      r: Math.random() * 2 + 1
+    });
+  }
+
+  (function draw() {
+    ctx.clearRect(0, 0, W2, H2);
+    nodes.forEach(n => {
+      n.x += n.vx; n.y += n.vy;
+      if (n.x < 0 || n.x > W2) n.vx *= -1;
+      if (n.y < 0 || n.y > H2) n.vy *= -1;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0, 229, 160, 0.4)';
+      ctx.fill();
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 150) {
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = `rgba(0, 229, 160, ${0.06 * (1 - d / 150)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  })();
+}
+
+// ═══ SCROLL REVEAL ═══
+const obs = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 80);
+    }
+  });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+// ═══ SMOOTH SCROLL ═══
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+</body>
+</html>

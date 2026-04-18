@@ -291,7 +291,7 @@
 
   .project-row {
     display: grid;
-    grid-template-columns: 140px 1fr 1.2fr auto;
+    grid-template-columns: 120px 1fr 1.2fr auto auto;
     gap: 32px;
     align-items: center;
     padding: 36px 0;
@@ -349,6 +349,38 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
     white-space: nowrap;
+  }
+
+  .proj-link {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-decoration: none;
+    padding: 10px 20px;
+    border: 1px solid rgba(0, 229, 160, 0.25);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.35s ease;
+    background: transparent;
+    white-space: nowrap;
+  }
+  .proj-link:hover {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+    box-shadow: 0 0 30px rgba(0, 229, 160, 0.2);
+    transform: translateX(4px);
+  }
+  .proj-link svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.3s;
+  }
+  .proj-link:hover svg {
+    transform: translateX(3px);
   }
 
   /* ═══ CONTACT ═══ */
@@ -451,6 +483,7 @@
       padding: 28px 0;
     }
     .proj-tech { justify-content: flex-start; }
+    .proj-link { align-self: start; }
     .nav-links { gap: 20px; }
     .hero-actions { flex-direction: column; width: fit-content; }
     footer { padding: 24px 28px; flex-direction: column; gap: 8px; }
@@ -505,7 +538,7 @@
         <div class="metric-label">Years in Crypto</div>
       </div>
       <div>
-        <div class="metric-val">15+</div>
+        <div class="metric-val">5+</div>
         <div class="metric-label">Projects Shipped</div>
       </div>
       <div>
@@ -537,23 +570,18 @@
 
     <div class="project-row reveal">
       <div class="proj-cat">Trading</div>
-      <div class="proj-name">#Tanya Aldo</div>
+      <div class="proj-name">Aldo</div>
       <div class="proj-desc">DEX price alert tracker with ±10% alerts, volume analysis & TA entry points</div>
-      <div class="proj-tech"><span>DexScreener</span><span>WebSocket</span></div>
+      <div class="proj-tech"><span>AI-POWERED</span></div>
+      <a href="https://aldo.michstev.xyz/" target="_blank" class="proj-link">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
     </div>
 
     <div class="project-row reveal">
-      <div class="proj-cat">AI × Trading</div>
-      <div class="proj-name">Solana AI Trading Bot</div>
-      <div class="proj-desc">AI-driven DCA limit order simulation with live market data integration</div>
-      <div class="proj-tech"><span>Solana</span><span>AI/ML</span><span>DCA</span></div>
-    </div>
-
-    <div class="project-row reveal">
-      <div class="proj-cat">AI × News</div>
-      <div class="proj-name">News Digest Bot</div>
-      <div class="proj-desc">Multi-source aggregation with AI summarization — RSS, Twitter, Reddit feeds</div>
-      <div class="proj-tech"><span>RSS</span><span>AI</span><span>Telegram</span></div>
+      <div class="proj-cat">Tarot</div>
+      <div class="proj-name">Tarot</div>
+      <div class="proj-desc">The cards know what you're afraid to ask. Every answer already exists.</div>
+      <div class="proj-tech"><span>AI-POWERED</span></div>
+      <a href="#" target="https://tarot.michstev.xyz/" class="proj-link">Open <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
     </div>
 
   </div>
@@ -569,7 +597,7 @@
       <a href="https://x.com/michsxbt" target="_blank">Twitter</a>
       <a href="https://www.instagram.com/michxbt/" target="_blank">Instagram</a>
       <a href="https://saham2.vercel.app/" target="_blank">Analisa Saham</a>
-      <a href="https://tarot.michstev.xyz/">TAROT</a>
+      <a href="https://tarot-ruddy-five.vercel.app/">TAROT</a>
     </div>
   </div>
 </div>

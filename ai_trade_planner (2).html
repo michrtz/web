@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Trade Planner — Decision System A–H</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#080b12;--s1:#0d1117;--s2:#111822;--s3:#161f30;--border:#1c2840;--border2:#243050;--long:#00d68f;--short:#ff3d5a;--gold:#f5a623;--blue:#4d9fff;--purple:#9b7ff8;--text:#e2eaf8;--muted:#4a5a7a;--dim:#2a3850;--ai:#7c6af0;--ai2:#5b4fd4}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--s1) 1px,transparent 1px),linear-gradient(90deg,var(--s1) 1px,transparent 1px);background-size:48px 48px;opacity:.32;pointer-events:none;z-index:0}
+.wrap{max-width:1300px;margin:0 auto;padding:24px 20px;position:relative;z-index:1}
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--ai),var(--ai2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 0 20px rgba(124,106,240,.3)}
+.brand-name{font-size:1.35rem;font-weight:800;letter-spacing:-.5px}
+.brand-sub{font-family:'JetBrains Mono',monospace;font-size:.57rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
+.hdr-r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pill{background:var(--s2);border:1px solid var(--border2);border-radius:20px;padding:6px 14px;font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--long);animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+/* PRICE */
+.ph{background:var(--s2);border:1px solid var(--border2);border-radius:14px;padding:18px 22px;margin-bottom:18px;display:grid;grid-template-columns:auto 1fr repeat(4,auto);gap:18px;align-items:center}
+@media(max-width:680px){.ph{grid-template-columns:1fr 1fr}}
+.p-lbl{font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--muted);letter-spacing:2px;margin-bottom:4px}
+.p-main{font-size:2.1rem;font-weight:800;letter-spacing:-1.5px;line-height:1}
+.p-chg{font-size:.7rem;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;margin-top:5px}
+.up{background:rgba(0,214,143,.1);color:var(--long)}.dn{background:rgba(255,61,90,.1);color:var(--short)}
+.ps{text-align:center}.ps-l{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:1px;margin-bottom:3px}.ps-v{font-size:.86rem;font-weight:700}
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:18px;flex-wrap:wrap}
+.tab{flex:1;min-width:100px;padding:9px 12px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .2s;text-align:center}
+.tab.active{background:var(--s3);color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.tab-c{display:none}.tab-c.active{display:block}
+/* SECTION */
+.sec{font-family:'JetBrains Mono',monospace;font-size:.54rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;margin:20px 0 11px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border)}
+/* CARD */
+.card{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:18px}
+/* CONFIG */
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:11px;margin-bottom:18px}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld label{font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.inp{background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:9px 11px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.76rem;outline:none;transition:border-color .2s}
+.inp:focus{border-color:var(--ai)}
+select.inp option{background:var(--s2)}
+.btn-gen{background:linear-gradient(135deg,var(--ai),var(--ai2));border:none;border-radius:8px;padding:10px 18px;color:#fff;font-family:'Outfit',sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .15s;align-self:flex-end}
+.btn-gen:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(124,106,240,.3)}
+/* INDICATORS */
+.ind-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:9px;margin-bottom:16px}
+.ind{background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:9px 11px}
+.ind-n{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:1px;margin-bottom:3px}
+.ind-v{font-size:.8rem;font-weight:700}.ind-s{font-size:.56rem;margin-top:2px}
+.bull{color:var(--long)}.bear{color:var(--short)}.neut{color:var(--gold)}
+/* SIGNAL */
+.sig{border-radius:11px;padding:13px 17px;border:1px solid;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:11px;margin-bottom:16px}
+.sig-l{background:rgba(0,214,143,.05);border-color:rgba(0,214,143,.18)}
+.sig-s{background:rgba(255,61,90,.05);border-color:rgba(255,61,90,.18)}
+.sig-dir{font-size:1.65rem;font-weight:800;letter-spacing:-1px}
+.sig-dir.long{color:var(--long)}.sig-dir.short{color:var(--short)}
+.sig-tag{font-family:'JetBrains Mono',monospace;font-size:.54rem;letter-spacing:2px;text-transform:uppercase}
+.sig-tag.long{color:var(--long)}.sig-tag.short{color:var(--short)}
+.sig-desc{font-size:.68rem;color:var(--muted);margin-top:2px}
+.cc{display:flex;flex-direction:column;gap:5px;align-items:flex-end}
+.ci{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.ct{width:100px;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.cf{height:100%;border-radius:2px;transition:width .6s ease}
+/* BALANCE */
+.bg{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:9px;margin-bottom:11px}
+.bi{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:10px 12px}
+.bi-l{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:1px;margin-bottom:3px}
+.bi-v{font-size:.88rem;font-weight:700}
+.bok{background:rgba(0,214,143,.06);border:1px solid rgba(0,214,143,.16);color:var(--long);border-radius:7px;padding:8px 13px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:700;margin-bottom:16px}
+.berr{background:rgba(255,61,90,.06);border:1px solid rgba(255,61,90,.16);color:var(--short);border-radius:7px;padding:8px 13px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:700;margin-bottom:16px}
+/* CHART */
+.cbox{background:var(--s2);border:1px solid var(--border);border-radius:14px;padding:15px 18px;margin-bottom:16px}
+.ct-title{font-size:.83rem;font-weight:700;margin-bottom:2px}
+.ct-sub{font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);margin-bottom:11px}
+.csvg{width:100%;overflow:visible}
+/* DUAL PLAN */
+.dual{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:740px){.dual{grid-template-columns:1fr}}
+.pc{background:var(--s2);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.pc-head{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.pc-title{font-weight:700;font-size:.86rem}
+.pc-roi{font-family:'JetBrains Mono',monospace;font-size:.92rem;font-weight:700}
+.pc-roi.pos{color:var(--long)}.pc-roi.neg{color:var(--short)}
+.pc-body{padding:13px 15px;display:flex;flex-direction:column;gap:9px}
+/* STRAT CARDS */
+.st{border:1px solid var(--border);border-radius:9px;padding:11px 13px}
+.st.ls{border-left:3px solid var(--long)}.st.ss{border-left:3px solid var(--short)}
+.st.hs{opacity:.42;border-left:3px solid var(--dim)}.st.ws{border-style:dashed;opacity:.58}
+.st.ns{border-left:3px solid var(--blue);background:rgba(77,159,255,.03)}
+.st-top{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:5px;margin-bottom:7px}
+.st-id{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.sl{font-size:1.05rem;font-weight:800;font-family:'JetBrains Mono',monospace}
+.sl.ls{color:var(--long)}.sl.ss{color:var(--short)}.sl.hs{color:var(--muted)}.sl.ns{color:var(--blue)}
+.badge{display:inline-block;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:.5rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.bl{background:rgba(0,214,143,.11);color:var(--long)}.bs{background:rgba(255,61,90,.11);color:var(--short)}
+.ba{background:rgba(245,166,35,.09);color:var(--gold)}.bn{background:rgba(77,159,255,.11);color:var(--blue)}
+.bh{background:rgba(74,90,122,.14);color:var(--muted)}.bw{background:var(--dim);color:var(--muted)}
+.btr{background:rgba(155,127,248,.11);color:var(--purple)}.be{background:rgba(74,90,122,.08);color:var(--muted);font-size:.48rem}
+.ep{text-align:right}.ep-l{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--muted)}.ep-v{font-size:.92rem;font-weight:700}
+.ep-v.lp{color:var(--long)}.ep-v.sp{color:var(--short)}
+.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;padding-top:7px;border-top:1px solid var(--border)}
+.sd{display:flex;flex-direction:column;gap:1px}
+.sdl{font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.sdv{font-size:.68rem;font-weight:600}
+.sdv.g{color:var(--long)}.sdv.r{color:var(--short)}.sdv.a{color:var(--gold)}.sdv.b{color:var(--blue)}.sdv.p{color:var(--purple)}
+.ctr{display:flex;align-items:center;gap:7px;margin-top:5px}
+.ctr-t{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.ctr-f{height:100%;border-radius:2px;transition:width .4s}
+.ctr-l{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--muted);white-space:nowrap}
+.sltp{display:flex;gap:6px;margin-top:7px;padding-top:7px;border-top:1px solid var(--border)}
+.slb{flex:1;background:rgba(255,61,90,.05);border:1px solid rgba(255,61,90,.11);border-radius:5px;padding:6px 8px}
+.tpb{flex:1;background:rgba(0,214,143,.05);border:1px solid rgba(0,214,143,.11);border-radius:5px;padding:6px 8px}
+.sll{font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--short);margin-bottom:1px}
+.tpl{font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--long);margin-bottom:1px}
+.slv{font-size:.74rem;font-weight:700;color:var(--short)}.tpv{font-size:.74rem;font-weight:700;color:var(--long)}
+.sln{font-size:.5rem;color:var(--muted)}
+.trl{margin-top:5px;padding:5px 8px;background:rgba(155,127,248,.05);border:1px solid rgba(155,127,248,.13);border-radius:5px;font-size:.6rem;color:var(--purple)}
+/* INFO TOGGLE */
+.ibtn{background:transparent;border:1px solid var(--border);border-radius:5px;padding:3px 8px;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:.5rem;cursor:pointer;transition:all .15s;margin-top:6px;display:inline-block}
+.ibtn:hover{border-color:var(--ai);color:var(--ai)}
+.ipanel{display:none;margin-top:7px;padding:9px 11px;background:rgba(124,106,240,.04);border:1px solid rgba(124,106,240,.14);border-radius:7px}
+.ipanel.open{display:block}
+.ip-title{font-weight:700;font-size:.7rem;color:var(--ai);margin-bottom:5px}
+.ip-body{font-size:.66rem;color:var(--text);line-height:1.65;margin-bottom:7px}
+.ip-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ip-item{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:7px 9px}
+.ip-il{font-family:'JetBrains Mono',monospace;font-size:.48rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.ip-iv{font-size:.65rem;font-weight:600;line-height:1.4}
+/* ALLOC BAR */
+.aw{margin-bottom:11px}
+.abar{height:7px;border-radius:4px;display:flex;overflow:hidden;background:var(--border);margin-bottom:5px}
+.aseg{height:100%}
+.aleg{display:flex;flex-wrap:wrap;gap:7px}
+.ali{display:flex;align-items:center;gap:4px;font-family:'JetBrains Mono',monospace;font-size:.53rem;color:var(--muted)}
+.adot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+/* TIER DIV */
+.tdiv{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--dim);letter-spacing:2px}
+.tdiv::before,.tdiv::after{content:'';flex:1;height:1px;background:var(--border)}
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:9px;margin-top:16px}
+.kpi{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:12px 14px}
+.kpi-l{font-family:'JetBrains Mono',monospace;font-size:.5rem;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px}
+.kpi-v{font-size:1rem;font-weight:700}
+.kvg{color:var(--long)}.kvr{color:var(--short)}.kva{color:var(--gold)}.kvp{color:var(--ai)}
+/* LOG */
+.log-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:700px){.log-wrap{grid-template-columns:1fr}}
+.llist{display:flex;flex-direction:column;gap:7px;max-height:500px;overflow-y:auto;padding-right:3px}
+.llist::-webkit-scrollbar{width:4px}
+.llist::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.li{background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:10px 13px;display:grid;grid-template-columns:58px 1fr 1fr auto;gap:7px;align-items:center}
+.ld{font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted)}
+.ldir{font-weight:700;font-size:.73rem}
+.lst{font-family:'JetBrains Mono',monospace;font-size:.53rem;color:var(--muted)}
+.lpnl{font-family:'JetBrains Mono',monospace;font-size:.56rem}
+.leq{text-align:right}
+.leqv{font-family:'JetBrains Mono',monospace;font-size:.78rem;font-weight:700}
+/* AI CHAT */
+.ail{display:grid;grid-template-columns:1fr 340px;gap:14px;align-items:start}
+@media(max-width:880px){.ail{grid-template-columns:1fr}}
+.cbox2{background:var(--s1);border:1px solid var(--border);border-radius:14px;display:flex;flex-direction:column;height:520px}
+.cms{flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:9px;scroll-behavior:smooth}
+.cms::-webkit-scrollbar{width:4px}
+.cms::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+.msg{display:flex;gap:8px;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+.av{width:26px;height:26px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem}
+.av.aia{background:linear-gradient(135deg,var(--ai),var(--ai2))}.av.ua{background:var(--s3);border:1px solid var(--border2)}
+.bub{max-width:87%;padding:8px 12px;border-radius:10px;font-size:.74rem;line-height:1.65}
+.msg.ai .bub{background:var(--s2);border:1px solid var(--border);border-bottom-left-radius:3px}
+.msg.user .bub{background:var(--s3);border:1px solid var(--border2);border-bottom-right-radius:3px}
+.bub b{color:var(--gold)}.bub code{background:var(--s3);padding:1px 4px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:.82em}
+.typ{display:flex;gap:4px;padding:8px 12px;background:var(--s2);border:1px solid var(--border);border-radius:10px;border-bottom-left-radius:3px;width:fit-content}
+.td2{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:td .9s ease-in-out infinite}
+.td2:nth-child(2){animation-delay:.15s}.td2:nth-child(3){animation-delay:.3s}
+@keyframes td{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+.cir{padding:9px;border-top:1px solid var(--border);display:flex;gap:6px}
+.cinp{flex:1;background:var(--s2);border:1px solid var(--border2);border-radius:7px;padding:8px 11px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.76rem;outline:none;transition:border-color .2s}
+.cinp:focus{border-color:var(--ai)}.cinp::placeholder{color:var(--muted)}
+.sbtn{background:linear-gradient(135deg,var(--ai),var(--ai2));border:none;border-radius:7px;padding:8px 13px;color:#fff;cursor:pointer;font-size:.8rem;transition:all .15s}
+.sbtn:hover{transform:scale(1.05)}.sbtn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+.qpt{font-family:'JetBrains Mono',monospace;font-size:.54rem;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:7px}
+.qpb{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px 12px;color:var(--text);font-family:'Outfit',sans-serif;font-size:.7rem;cursor:pointer;text-align:left;transition:all .15s;line-height:1.4;width:100%;display:block;margin-bottom:5px}
+.qpb:hover{border-color:var(--ai);color:var(--ai);background:var(--s3)}
+/* MISC */
+.load{display:flex;align-items:center;gap:9px;padding:28px;justify-content:center;color:var(--muted);font-size:.73rem}
+.spin{width:15px;height:15px;border:2px solid var(--border2);border-top-color:var(--ai);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sim-note{background:rgba(124,106,240,.05);border:1px solid rgba(124,106,240,.14);border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:.68rem;color:var(--muted);line-height:1.6}
+.sim-note b{color:var(--ai)}
+.grid-l{stroke:var(--border);stroke-width:.5}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="hdr">
+  <div class="brand">
+    <div class="brand-icon">🧠</div>
+    <div><div class="brand-name">Kenn Trade Planner</div><div class="brand-sub">Decision System · Strategi A–H · Claude AI</div></div>
+  </div>
+  <div class="hdr-r">
+    <span class="pill" id="tPill">—</span>
+    <span class="pill" id="sPill">src: —</span>
+    <span class="pill"><div class="dot"></div><span id="pPill">Loading…</span></span>
+  </div>
+</div>
+
+<div class="ph">
+  <div><div class="p-lbl">BTC / USDT</div><div class="p-main" id="pMain">—</div><div class="p-chg" id="pChg">—</div></div>
+  <div></div>
+  <div class="ps"><div class="ps-l">24H HIGH</div><div class="ps-v" id="pHi">—</div></div>
+  <div class="ps"><div class="ps-l">24H LOW</div><div class="ps-v" id="pLo">—</div></div>
+  <div class="ps"><div class="ps-l">VOLUME</div><div class="ps-v" id="pVol">—</div></div>
+  <div class="ps"><div class="ps-l">UPDATE</div><div class="ps-v" id="pTime" style="font-size:.72rem">—</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="setTab('planner')">📋 Daily Planner</button>
+  <button class="tab" onclick="setTab('ai')">🤖 Tanya AI</button>
+  <button class="tab" onclick="setTab('log')">📊 Simulasi Real</button>
+</div>
+
+<!-- ═══ TAB PLANNER ═══ -->
+<div class="tab-c active" id="tab-planner">
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:.9rem;font-weight:700;margin-bottom:2px">⚙️ Konfigurasi Harian</div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted);margin-bottom:13px">// Input modal & parameter sebelum generate plan</div>
+    <div class="cfg">
+      <div class="fld"><label>Modal Total (USD)</label><input class="inp" type="number" id="capital" value="1000" min="100" step="50"></div>
+      <div class="fld"><label>Equity H-1 (USD)</label><input class="inp" type="number" id="equityY" value="1000" step="0.01" oninput="renderBalance()"></div>
+      <div class="fld"><label>Wait Bucket H-1</label><input class="inp" type="number" id="waitB" value="200" step="0.01" oninput="renderBalance()"></div>
+      <div class="fld"><label>Safety Stop (%)</label><input class="inp" type="number" id="slPct" value="3" min="0.5" max="20" step="0.5"></div>
+      <div class="fld"><label>Max Durasi Default</label><select class="inp" id="maxDur"><option value="7">7 Hari</option><option value="14" selected>14 Hari</option><option value="21">21 Hari</option></select></div>
+      <div class="fld"><button class="btn-gen" onclick="genPlan()">⚡ Generate Plan</button></div>
+    </div>
+  </div>
+  <div class="sec">Indikator Teknikal · Real-Time</div>
+  <div class="ind-row" id="indRow"><div class="load"><div class="spin"></div>Memuat...</div></div>
+  <div class="sec">Sinyal Arah · AI Consensus</div>
+  <div class="sig sig-l" id="sigEl"><div class="load"><div class="spin"></div></div></div>
+  <div class="sec">Balancing Check — A = B + C + D</div>
+  <div class="bg" id="balG"><div class="load"><div class="spin"></div></div></div>
+  <div id="balR">—</div>
+  <div class="cbox" style="margin-top:16px">
+    <div class="ct-title">BTC · 1H Candles</div>
+    <div class="ct-sub" id="ctSub">// Menunggu data...</div>
+    <svg class="csvg" id="ctSvg" height="100" viewBox="0 0 900 100"><text x="450" y="55" text-anchor="middle" font-size="12" fill="#4a5a7a">Memuat...</text></svg>
+  </div>
+  <div class="sec">Daily Entry Plan — Normal vs Reverse (Strategi A–H)</div>
+  <div class="dual" id="dualPlan"><div class="load" style="grid-column:1/-1"><div class="spin"></div>Klik Generate Plan...</div></div>
+  <div class="sec">Proyeksi & KPI</div>
+  <div class="kpi-row" id="kpiRow"><div class="load"><div class="spin"></div></div></div>
+</div>
+
+<!-- ═══ TAB AI ═══ -->
+<div class="tab-c" id="tab-ai">
+  <div class="ail">
+    <div class="cbox2">
+      <div class="cms" id="cms">
+        <div class="msg ai"><div class="av aia">🧠</div><div class="bub">Halo! Saya AI untuk sistem <b>Decision Sederhana</b>.<br><br>Saya memahami strategi <b>A–H</b>:<br>• <b>A</b> (#321) Tier1 Agresif · <b>B</b> (#539) Tier1 Konservatif<br>• <b>C</b> (#168) Tier2 Trailing ⚠️ counter 5/8 · <b>D</b> (#131) Tier3 Panjang<br>• <b>E</b> (#113) Kandidat Baru · <b>F,G,H</b> Halted (H kritis!)<br><br>Tanya apa saja tentang strategi, entry price, atau kondisi market.</div></div>
+      </div>
+      <div class="cir">
+        <input class="cinp" id="cinp" type="text" placeholder="Tanya tentang strategi A-H, entry, arah market..." onkeydown="if(event.key==='Enter')sendMsg()">
+        <button class="sbtn" id="sbtn" onclick="sendMsg()">↑</button>
+      </div>
+    </div>
+    <div>
+      <div class="qpt">Quick Ask</div>
+      <button class="qpb" onclick="qa('Analisis kondisi BTC hari ini. Rekomendasikan apakah Normal atau Reverse yang cocok, dan strategi mana (A sampai H) yang sebaiknya diaktifkan.')">🎯 Normal/Reverse + strategi aktif?</button>
+      <button class="qpb" onclick="qa('Jelaskan strategi A sampai H secara lengkap: alokasi modal, tier, exit strategy, counter status, dan mana yang paling berisiko saat ini.')">📋 Jelaskan A–H lengkap</button>
+      <button class="qpb" onclick="qa('Hitung entry limit price untuk A, B, C, D berdasarkan harga BTC saat ini. Sertakan Safety Stop dan Take Profit.')">💰 Entry A,B,C,D hari ini</button>
+      <button class="qpb" onclick="qa('Dari simulasi historis real BTC 21 Mar–21 Apr, Normal ROI +4.13% dan Reverse -0.54%. Apa artinya? Apakah sinyal Normal sudah lebih baik dari sebelumnya?')">📈 Analisis simulasi historis</button>
+      <button class="qpb" onclick="qa('Strategi C (#168) counter 5/8 dengan Trailing Stop aktif. Apa risikonya? Kapan C akan masuk Halted?')">⚠️ Risiko strategi C (5/8)</button>
+      <button class="qpb" onclick="qa('Strategi H (#586) counter kritis 14/15. Apa yang harus dilakukan: reset, ganti kandidat baru, atau biarkan expired? Berikan rekomendasi konkret.')">🔴 H counter 14/15 — apa tindakan?</button>
+      <button class="qpb" onclick="qa('Apa perbedaan exit Fixed 14Days vs %PriceChange14DR? Kapan masing-masing lebih optimal berdasarkan kondisi BTC saat ini?')">🚪 14Days vs %PriceChange14DR</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB LOG ═══ -->
+<div class="tab-c" id="tab-log">
+  <div class="sim-note">
+    <b>📊 Simulasi dijalankan ulang dengan harga BTC real</b> — close price BTC direkonstruksi dari data transaksi nyata di Excel (coin amount × USD value per hari). Strategi <b>A–H</b> dijalankan dengan aturan Decision Sederhana penuh: tiered allocation, limit entry, safety stop, trailing stop, exit berbasis durasi atau %PriceChange. Modal $1,000 · 32 hari (21 Mar–21 Apr 2026).
+  </div>
+  <div class="cbox" style="margin-bottom:14px">
+    <div class="ct-title">Equity Curve — Normal vs Reverse (Real BTC Prices)</div>
+    <div class="ct-sub">// Strategi A–H · Modal $1,000 · Garis putus = breakeven</div>
+    <svg class="csvg" id="simSvg" height="160" viewBox="0 0 900 160"><text x="450" y="80" text-anchor="middle" font-size="12" fill="#4a5a7a">Memuat...</text></svg>
+    <div style="display:flex;gap:14px;margin-top:7px;flex-wrap:wrap">
+      <div class="ali"><div class="adot" style="background:var(--long)"></div>Normal (+4.13%)</div>
+      <div class="ali"><div class="adot" style="background:var(--short)"></div>Reverse (-0.54%)</div>
+      <div class="ali"><div class="adot" style="background:var(--gold);opacity:.6"></div>BTC Close (scaled)</div>
+    </div>
+  </div>
+  <div class="log-wrap">
+    <div class="card">
+      <div style="font-size:.88rem;font-weight:700;color:var(--long);margin-bottom:2px">📈 Normal — Strategi A–H</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);margin-bottom:11px">// ROI <span id="nRoi" style="color:var(--long)">+4.13%</span> · Harga BTC real</div>
+      <div class="llist" id="nLog"><div class="load"><div class="spin"></div></div></div>
+    </div>
+    <div class="card">
+      <div style="font-size:.88rem;font-weight:700;color:var(--short);margin-bottom:2px">📉 Reverse — Strategi A–H</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);margin-bottom:11px">// ROI <span id="rRoi" style="color:var(--short)">-0.54%</span> · Arah dibalik</div>
+      <div class="llist" id="rLog"><div class="load"><div class="spin"></div></div></div>
+    </div>
+  </div>
+  <div class="sec">Strategi A–H — Keterangan Lengkap</div>
+  <div id="stratLeg" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:11px"></div>
+</div>
+
+</div>
+<script>
+// ═══════════════════ STRATEGIES A–H ═══════════════════
+const STRATS=[
+  {letter:'A',id:321,tier:1,allocPct:20.83,dur:14,offset:-0.013,zone:'60-65%',exit:'14Days',maxCtr:15,ctr:1,trail:null,safetyOrig:77303.25,status:'active',name:'Tier 1 Agresif',color:'#f5a623',
+    desc:'Strategi pembuka Tier 1 dengan alokasi terbesar (20.83%). Entry cepat di zona 60-65% — tidak menunggu dip terlalu dalam. Cocok saat momentum jelas dan trend kuat. Exit paksa di hari ke-14 tanpa pengecualian.',
+    exitDesc:'Fixed 14Days — posisi ditutup otomatis hari ke-14 sejak entry pertama, profit atau rugi.',
+    riskNote:'Counter 1/15 — masih awal, 14 percobaan tersisa. Safety Stop $77,303.'},
+  {letter:'B',id:539,tier:1,allocPct:20.00,dur:14,offset:-0.019,zone:'70-75%',exit:'14Days',maxCtr:15,ctr:1,trail:null,safetyOrig:77949.94,status:'active',name:'Tier 1 Konservatif',color:'#00d68f',
+    desc:'Pasangan A di Tier 1. Zona entry lebih dalam (70-75%) — menunggu harga bergerak lebih jauh sebelum masuk. Potensi profit lebih besar tapi risiko limit order tidak terisi (unfilled) lebih tinggi.',
+    exitDesc:'Fixed 14Days — exit paksa hari ke-14 sama seperti A.',
+    riskNote:'Zona lebih dalam = unfilled risk tinggi. Jika limit tidak terisi dalam 14 hari, posisi tidak terbuka sama sekali.'},
+  {letter:'C',id:168,tier:2,allocPct:20.54,dur:7,offset:-0.013,zone:'60-65%',exit:'7Days',maxCtr:8,ctr:5,trail:74935.75,safetyOrig:72018.80,status:'active',name:'Tier 2 Medium + Trail',color:'#4d9fff',
+    desc:'Strategi Tier 2 durasi pendek 7 hari. Memiliki Trailing Stop aktif yang mengunci profit. Sudah masuk counter 5/8 — hampir maxed! Cocok untuk momentum jangka pendek dengan proteksi ganda.',
+    exitDesc:'7Days + Trailing Stop $74,935 — keluar saat hari ke-7 atau harga menyentuh trailing stop, mana lebih dulu.',
+    riskNote:'⚠️ Counter 5/8 KRITIS — hanya 3 percobaan tersisa. Safety Stop $72,018. Jika terkena sebelum selesai, masuk Halted.'},
+  {letter:'D',id:131,tier:3,allocPct:19.11,dur:42,offset:-0.022,zone:'55-60%',exit:'%PriceChange14DR',maxCtr:42,ctr:2,trail:73016.88,safetyOrig:73684.59,status:'active',name:'Tier 3 Panjang + Trail',color:'#9b7ff8',
+    desc:'Strategi paling sabar — durasi hingga 42 hari, zona entry terdalam 55-60%. Exit dinamis berdasarkan %perubahan harga 14 hari rolling. Dua lapis proteksi: Trailing Stop + Safety Stop.',
+    exitDesc:'%PriceChange14DR — keluar saat perubahan harga rolling 14D mencapai target. Lebih adaptif dari Fixed Days.',
+    riskNote:'Safety Stop $73,684 | Trailing Stop $73,016. Counter 2/42 — masih sangat awal.'},
+  {letter:'E',id:113,tier:3,allocPct:18.75,dur:14,offset:-0.022,zone:'55-60%',exit:'%PriceChange14DR',maxCtr:0,ctr:0,trail:null,safetyOrig:70684.08,status:'new',name:'Tier 3 Kandidat Baru',color:'#4d9fff',
+    desc:'Belum aktif — menunggu kondisi entry. Modal sudah dialokasikan dari Wait Bucket tapi limit order belum terisi. Akan aktif saat harga mencapai zona 55-60% di bawah/atas harga pasar.',
+    exitDesc:'%PriceChange14DR — exit dinamis saat aktif nanti.',
+    riskNote:'Kandidat Baru: counter 0, belum ada posisi terbuka. Safety Stop planned $70,684.'},
+  {letter:'F',id:83,tier:1,allocPct:0,dur:15,offset:-0.013,zone:'60-65%',exit:'14Days',maxCtr:15,ctr:8,trail:77759.57,safetyOrig:72702.85,status:'halted',name:'Tier 1 Halted',color:'#4a5a7a',
+    desc:'Di-halt — tidak mendapat alokasi modal. Counter 8/15, kondisi tidak memenuhi syarat lanjut. Kemungkinan terkena Safety Stop atau sinyal reversal kuat. Bisa diaktifkan ulang jika setup terbentuk lagi.',
+    exitDesc:'Terakhir: 14Days. Di-halt sebelum counter habis.',
+    riskNote:'Halted. Tersisa 7 percobaan jika diaktifkan ulang.'},
+  {letter:'G',id:477,tier:1,allocPct:0,dur:15,offset:-0.019,zone:'55-60%',exit:'14Days',maxCtr:15,ctr:8,trail:77096.15,safetyOrig:74428.20,status:'halted',name:'Tier 1 Halted',color:'#4a5a7a',
+    desc:'Halted bersamaan dengan F — keduanya Tier 1 tidak aktif. Counter 8/15. Dua strategi Tier 1 halted bersamaan mengindikasikan Tier 1 sedang dalam mode defensif menunggu kondisi lebih jelas.',
+    exitDesc:'Terakhir: 14Days.',
+    riskNote:'F dan G halted bersamaan = Tier 1 defensif. Tunggu konfirmasi trend baru sebelum reaktivasi.'},
+  {letter:'H',id:586,tier:1,allocPct:0,dur:15,offset:-0.013,zone:'60-65%',exit:'14Days',maxCtr:15,ctr:14,trail:76825.48,safetyOrig:68746.04,status:'halted',name:'Tier 1 KRITIS',color:'#ff3d5a',
+    desc:'🔴 KRITIS — counter 14/15, hampir expired! Hanya 1 percobaan entry tersisa. Jika counter habis tanpa profit, strategi ini perlu di-reset manual atau diganti dengan kandidat baru di Tier 1.',
+    exitDesc:'Counter kritis: 14 dari 15 sudah terpakai.',
+    riskNote:'🔴 1 percobaan tersisa. Evaluasi segera: reset atau ganti kandidat baru di Tier 1?'},
+];
+
+// ═══════════════════ SIMULATION DATA (Real BTC) ═══════════════════
+const SIM_N=[{date:"21/3",close:68929,dir:"Long",equity:1017.84,wr:100,pnl:17.84},{date:"22/3",close:67861,dir:"Long",equity:1002.19,wr:60,pnl:2.19},{date:"23/3",close:70915,dir:"Long",equity:1046.94,wr:100,pnl:46.94},{date:"24/3",close:70565,dir:"Long",equity:1041.81,wr:100,pnl:41.81},{date:"25/3",close:71345,dir:"Long",equity:1053.25,wr:100,pnl:53.25},{date:"26/3",close:68828,dir:"Short",equity:1016.36,wr:100,pnl:16.36},{date:"27/3",close:68600,dir:"Short",equity:1013.02,wr:100,pnl:13.02},{date:"28/3",close:68500,dir:"Short",equity:1012.78,wr:100,pnl:12.78},{date:"29/3",close:68400,dir:"Short",equity:1011.91,wr:100,pnl:11.91},{date:"30/3",close:68350,dir:"Short",equity:1011.48,wr:100,pnl:11.48},{date:"31/3",close:68281,dir:"Short",equity:1010.88,wr:100,pnl:10.88},{date:"1/4",close:68111,dir:"Short",equity:1009.4,wr:100,pnl:9.4},{date:"2/4",close:66913,dir:"Short",equity:999.01,wr:20,pnl:-0.99},{date:"3/4",close:66750,dir:"Short",equity:997.6,wr:20,pnl:-2.4},{date:"4/4",close:66500,dir:"Short",equity:1010.49,wr:80,pnl:10.49},{date:"5/4",close:66200,dir:"Short",equity:1013.19,wr:80,pnl:13.19},{date:"6/4",close:67800,dir:"Long",equity:998.77,wr:40,pnl:-1.23},{date:"7/4",close:71931,dir:"Long",equity:961.52,wr:20,pnl:-38.48},{date:"8/4",close:71074,dir:"Long",equity:969.24,wr:20,pnl:-30.76},{date:"9/4",close:71200,dir:"Long",equity:968.11,wr:20,pnl:-31.89},{date:"10/4",close:71350,dir:"Short",equity:966.76,wr:20,pnl:-33.24},{date:"11/4",close:71400,dir:"Long",equity:981.32,wr:40,pnl:-18.68},{date:"12/4",close:71000,dir:"Short",equity:982.54,wr:40,pnl:-17.46},{date:"13/4",close:72500,dir:"Long",equity:977.96,wr:40,pnl:-22.04},{date:"14/4",close:73000,dir:"Long",equity:976.43,wr:40,pnl:-23.57},{date:"15/4",close:73200,dir:"Long",equity:975.82,wr:40,pnl:-24.18},{date:"16/4",close:75165,dir:"Long",equity:969.82,wr:40,pnl:-30.18},{date:"17/4",close:75400,dir:"Long",equity:969.1,wr:40,pnl:-30.9},{date:"18/4",close:75500,dir:"Long",equity:1036.47,wr:100,pnl:36.47},{date:"19/4",close:73805,dir:"Short",equity:1013.37,wr:20,pnl:13.37},{date:"20/4",close:75858,dir:"Long",equity:1041.34,wr:100,pnl:41.34},{date:"21/4",close:75858,dir:"Long",equity:1041.34,wr:100,pnl:41.34}];
+const SIM_R=[{date:"21/3",close:68929,dir:"Short",equity:1017.19,wr:100,pnl:17.19},{date:"22/3",close:67861,dir:"Short",equity:1032.3,wr:100,pnl:32.3},{date:"23/3",close:70915,dir:"Short",equity:989.09,wr:0,pnl:-10.91},{date:"24/3",close:70565,dir:"Short",equity:994.04,wr:0,pnl:-5.96},{date:"25/3",close:71345,dir:"Short",equity:983.01,wr:0,pnl:-16.99},{date:"26/3",close:68828,dir:"Long",equity:1018.62,wr:100,pnl:18.62},{date:"27/3",close:68600,dir:"Long",equity:1021.84,wr:100,pnl:21.84},{date:"28/3",close:68500,dir:"Long",equity:1022.06,wr:100,pnl:22.06},{date:"29/3",close:68400,dir:"Long",equity:1022.88,wr:100,pnl:22.88},{date:"30/3",close:68350,dir:"Long",equity:1023.29,wr:100,pnl:23.29},{date:"31/3",close:68281,dir:"Long",equity:1023.85,wr:100,pnl:23.85},{date:"1/4",close:68111,dir:"Long",equity:1025.24,wr:100,pnl:25.24},{date:"2/4",close:66913,dir:"Long",equity:1035.03,wr:80,pnl:35.03},{date:"3/4",close:66750,dir:"Long",equity:1036.36,wr:80,pnl:36.36},{date:"4/4",close:66500,dir:"Long",equity:1024.24,wr:100,pnl:24.24},{date:"5/4",close:66200,dir:"Long",equity:1021.38,wr:100,pnl:21.38},{date:"6/4",close:67800,dir:"Short",equity:1036.64,wr:100,pnl:36.64},{date:"7/4",close:71931,dir:"Short",equity:1076.05,wr:80,pnl:76.05},{date:"8/4",close:71074,dir:"Short",equity:1067.87,wr:80,pnl:67.87},{date:"9/4",close:71200,dir:"Short",equity:1069.08,wr:80,pnl:69.08},{date:"10/4",close:71350,dir:"Long",equity:1070.51,wr:80,pnl:70.51},{date:"11/4",close:71400,dir:"Short",equity:1055.58,wr:80,pnl:55.58},{date:"12/4",close:71000,dir:"Long",equity:1054.15,wr:80,pnl:54.15},{date:"13/4",close:72500,dir:"Short",equity:1059.51,wr:60,pnl:59.51},{date:"14/4",close:73000,dir:"Short",equity:1061.29,wr:60,pnl:61.29},{date:"15/4",close:73200,dir:"Short",equity:1062.01,wr:60,pnl:62.01},{date:"16/4",close:75165,dir:"Short",equity:1069.02,wr:60,pnl:69.02},{date:"17/4",close:75400,dir:"Short",equity:1069.86,wr:60,pnl:69.86},{date:"18/4",close:75500,dir:"Short",equity:999.36,wr:80,pnl:-0.64},{date:"19/4",close:73805,dir:"Long",equity:1021.65,wr:80,pnl:21.65},{date:"20/4",close:75858,dir:"Short",equity:994.65,wr:80,pnl:-5.35},{date:"21/4",close:75858,dir:"Short",equity:994.65,wr:80,pnl:-5.35}];
+
+const TC=['#f5a623','#00d68f','#4d9fff','#9b7ff8','#ff6b8a'];
+let btc={price:0,chg:0,high:0,low:0,vol:0,klines:[]};
+let inds={rsi:50,ema20:0,ema50:0,macd:0,bbU:0,bbL:0,bbM:0};
+let domDir='Long',confScore=0,pSrc='—';
+
+function setTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',['planner','ai','log'][i]===id));
+  document.querySelectorAll('.tab-c').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='log'){renderLog();renderSimChart();}
+}
+
+// ═══ PRICE FETCH ═══
+function ft(u,ms=3500){return Promise.race([fetch(u),new Promise((_,r)=>setTimeout(()=>r(new Error('to')),ms))])}
+const srcs=[
+  async()=>{const r=await ft('https://api.kraken.com/0/public/Ticker?pair=XBTUSD');if(!r.ok)throw 0;const d=await r.json(),t=d.result.XXBTZUSD;return{price:+t.c[0],chg:((+t.c[0]-+t.o)/+t.o)*100,high:+t.h[1],low:+t.l[1],vol:+t.v[1],src:'Kraken'}},
+  async()=>{const r=await ft('https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT');if(!r.ok)throw 0;const d=await r.json(),t=d.data[0];return{price:+t.last,chg:((+t.last-+t.open24h)/+t.open24h)*100,high:+t.high24h,low:+t.low24h,vol:+t.vol24h,src:'OKX'}},
+  async()=>{const r=await ft('https://api.bybit.com/v5/market/tickers?category=spot&symbol=BTCUSDT');if(!r.ok)throw 0;const d=await r.json(),t=d.result.list[0];return{price:+t.lastPrice,chg:+t.price24hPcnt*100,high:+t.highPrice24h,low:+t.lowPrice24h,vol:+t.volume24h,src:'Bybit'}},
+  async()=>{const r=await ft('https://api.mexc.com/api/v3/ticker/24hr?symbol=BTCUSDT',3500);if(!r.ok)throw 0;const d=await r.json();return{price:+d.lastPrice,chg:+d.priceChangePercent,high:+d.highPrice,low:+d.lowPrice,vol:+d.volume,src:'MEXC'}},
+  async()=>{const r=await ft('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd&include_24hr_change=true',4500);if(!r.ok)throw 0;const d=await r.json(),p=d.bitcoin.usd;return{price:p,chg:d.bitcoin.usd_24h_change,high:p*1.015,low:p*0.985,vol:0,src:'CoinGecko'}},
+];
+
+async function fetchPrice(){
+  try{const res=await Promise.any(srcs.map(s=>s()));Object.assign(btc,res);pSrc=res.src;updatePUI();fetchKlines();}
+  catch(e){pSrc='OFFLINE';['pMain','pChg','pHi','pLo','pVol','pTime','pPill'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});document.getElementById('sPill').textContent='src: OFFLINE';document.getElementById('tPill').textContent=new Date().toLocaleTimeString('id-ID');}
+}
+
+async function fetchKlines(){
+  const aa=[
+    async()=>{const r=await ft('https://api.kraken.com/0/public/OHLC?pair=XBTUSD&interval=60&count=50');if(!r.ok)throw 0;const d=await r.json();return d.result.XXBTZUSD.slice(-50).map(k=>({o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[6]}))},
+    async()=>{const r=await ft('https://www.okx.com/api/v5/market/candles?instId=BTC-USDT&bar=1H&limit=50');if(!r.ok)throw 0;const d=await r.json();return d.data.reverse().map(k=>({o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}))},
+    async()=>{const r=await ft('https://api.bybit.com/v5/market/kline?symbol=BTCUSDT&interval=60&limit=50');if(!r.ok)throw 0;const d=await r.json();return d.result.list.reverse().map(k=>({o:+k[1],h:+k[2],l:+k[3],c:+k[4],v:+k[5]}))},
+  ];
+  for(const a of aa){try{const k=await a();if(k&&k.length>10){btc.klines=k;break;}}catch(e){}}
+  if(!btc.klines.length)simK();
+  compInds();renderChart();
+}
+
+function simK(){let p=btc.price||75000;const k=[];for(let i=0;i<50;i++){const o=p,c=o+(Math.random()-.47)*o*.008;k.push({o,h:Math.max(o,c)*(1+Math.random()*.004),l:Math.min(o,c)*(1-Math.random()*.004),c,v:100});p=c;}btc.klines=k;}
+
+function updatePUI(){
+  const p=btc.price,ch=btc.chg;
+  document.getElementById('pMain').textContent='$'+p.toLocaleString('en-US',{maximumFractionDigits:0});
+  const cel=document.getElementById('pChg');cel.textContent=(ch>=0?'▲ +':'▼ ')+ch.toFixed(2)+'%';cel.className='p-chg '+(ch>=0?'up':'dn');
+  document.getElementById('pHi').textContent='$'+btc.high.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('pLo').textContent='$'+btc.low.toLocaleString('en-US',{maximumFractionDigits:0});
+  const v=btc.vol;document.getElementById('pVol').textContent=v>1000?(v/1000).toFixed(1)+'K':v.toFixed(0);
+  const now=new Date();
+  document.getElementById('pTime').textContent=now.toLocaleTimeString('id-ID');
+  document.getElementById('pPill').textContent='$'+p.toLocaleString('en-US',{maximumFractionDigits:0});
+  document.getElementById('sPill').textContent='⚡ '+pSrc;
+  document.getElementById('tPill').textContent=now.toLocaleTimeString('id-ID');
+}
+
+// ═══ INDICATORS ═══
+function compInds(){
+  const cl=btc.klines.map(k=>k.c),n=cl.length;if(n<14)return;
+  const ema=(d,p)=>{const k=2/(p+1);return d.reduce((e,v,i)=>i===0?v:v*k+e*(1-k));};
+  let g=0,l=0;for(let i=n-14;i<n;i++){const d=cl[i]-cl[i-1];d>0?g+=d:l-=d;}
+  inds.rsi=l===0?100:100-(100/(1+g/14/(l/14)));
+  inds.ema20=ema(cl.slice(-20),20);inds.ema50=ema(cl.slice(-50),50);
+  const e12=ema(cl.slice(-26),12),e26=ema(cl.slice(-26),26);inds.macd=e12-e26;
+  const sl=cl.slice(-20),mn=sl.reduce((a,b)=>a+b,0)/20,sd=Math.sqrt(sl.reduce((a,b)=>a+Math.pow(b-mn,2),0)/20);
+  inds.bbU=mn+2*sd;inds.bbL=mn-2*sd;inds.bbM=mn;
+  renderInds();calcSig();
+}
+
+function renderInds(){
+  const p=btc.price,{rsi,ema20,ema50,macd,bbU,bbL}=inds;
+  const items=[
+    {n:'RSI (14)',v:rsi.toFixed(1),c:rsi>70?'bear':rsi<30?'bull':'neut',s:rsi>70?'OVERBOUGHT':rsi<30?'OVERSOLD':'NEUTRAL'},
+    {n:'EMA 20/50',v:ema20>ema50?'20>50':'20<50',c:ema20>ema50?'bull':'bear',s:ema20>ema50?'BULLISH':'BEARISH'},
+    {n:'MACD',v:macd.toFixed(0),c:macd>0?'bull':'bear',s:macd>0?'POSITIF':'NEGATIF'},
+    {n:'BB Posisi',v:p>bbU?'Atas Band':p<bbL?'Bawah Band':'Dalam Band',c:p>bbU?'bear':p<bbL?'bull':'neut',s:''},
+    {n:'Trend EMA50',v:p>inds.ema50?'UPTREND':'DNTREND',c:p>inds.ema50?'bull':'bear',s:''},
+    {n:'24H Change',v:(btc.chg>=0?'+':'')+btc.chg.toFixed(2)+'%',c:btc.chg>=0?'bull':'bear',s:''},
+  ];
+  document.getElementById('indRow').innerHTML=items.map(i=>`<div class="ind"><div class="ind-n">${i.n}</div><div class="ind-v ${i.c}">${i.v}</div><div class="ind-s ${i.c}">${i.s}</div></div>`).join('');
+}
+
+function calcSig(){
+  let sc=0;
+  if(inds.ema20>inds.ema50)sc++;else sc--;
+  if(inds.macd>0)sc++;else sc--;
+  if(inds.rsi<50)sc++;else sc--;
+  if(btc.price<inds.bbM)sc++;else sc--;
+  if(btc.chg<0)sc++;else sc--;
+  domDir=sc>0?'Long':'Short';confScore=Math.abs(sc);
+  const conf=Math.min(95,50+confScore*10),rc=100-conf;
+  const el=document.getElementById('sigEl');
+  el.className='sig '+(domDir==='Long'?'sig-l':'sig-s');
+  el.innerHTML=`<div><div class="sig-tag ${domDir==='Long'?'long':'short'}">NORMAL · ${confScore}/5 indikator</div>
+  <div class="sig-dir ${domDir==='Long'?'long':'short'}">${domDir==='Long'?'▲ LONG':'▼ SHORT'}</div>
+  <div class="sig-desc">${domDir==='Long'?'Entry limit di bawah harga · tunggu dip':'Entry limit di atas harga · tunggu pump'} · Skor ${sc>0?'+':''}${sc}/5</div></div>
+  <div class="cc">
+    <div class="ci"><span style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--muted)">Normal ${domDir} ${conf}%</span><div class="ct"><div class="cf" style="width:${conf}%;background:${domDir==='Long'?'var(--long)':'var(--short)'}"></div></div></div>
+    <div class="ci"><span style="font-family:'JetBrains Mono',monospace;font-size:.52rem;color:var(--muted)">Reverse ${domDir==='Long'?'Short':'Long'} ${rc}%</span><div class="ct"><div class="cf" style="width:${rc}%;background:${domDir==='Long'?'var(--short)':'var(--long)'}"></div></div></div>
+  </div>`;
+  renderBalance();
+}
+
+// ═══ BALANCE ═══
+function renderBalance(){
+  const A=parseFloat(document.getElementById('equityY').value)||1000;
+  const wb=parseFloat(document.getElementById('waitB').value)||200;
+  const B=A-wb,C=wb,D=0,chk=A-(B+C+D);
+  document.getElementById('balG').innerHTML=`
+    <div class="bi"><div class="bi-l">A · Equity Total H-1</div><div class="bi-v" style="color:var(--gold)">$${A.toFixed(2)}</div></div>
+    <div class="bi"><div class="bi-l">B · Posisi Aktif</div><div class="bi-v">$${B.toFixed(2)}</div></div>
+    <div class="bi"><div class="bi-l">C · Limit Order</div><div class="bi-v" style="color:var(--blue)">$${C.toFixed(2)}</div></div>
+    <div class="bi"><div class="bi-l">D · Wait Bucket Sisa</div><div class="bi-v" style="color:var(--muted)">$${D.toFixed(2)}</div></div>`;
+  const ok=Math.abs(chk)<0.5;
+  const el=document.getElementById('balR');
+  el.className=ok?'bok':'berr';
+  el.textContent=ok?`✓ BALANCE OK — A=$${A.toFixed(2)} = B+C+D=$${(B+C+D).toFixed(2)}`:`✗ TIDAK BALANCE — Selisih $${chk.toFixed(2)}`;
+}
+
+// ═══ REALTIME CHART ═══
+function renderChart(){
+  const kl=btc.klines.slice(-30);if(!kl.length)return;
+  const W=900,H=100,pL=8,pR=10,pT=6,pB=16;
+  const mx=Math.max(...kl.map(k=>k.h)),mn=Math.min(...kl.map(k=>k.l)),rng=mx-mn||1;
+  const xC=i=>pL+i*(W-pL-pR)/(kl.length-1),yP=v=>pT+(1-(v-mn)/rng)*(H-pT-pB);
+  const cl=kl.map(k=>k.c);
+  const pd=cl.map((c,i)=>`${i===0?'M':'L'}${xC(i)},${yP(c)}`).join(' ');
+  const ad=pd+` L${xC(kl.length-1)},${H-pB} L${xC(0)},${H-pB} Z`;
+  const last=cl[cl.length-1],up=last>=cl[0],lc=up?'#00d68f':'#ff3d5a';
+  document.getElementById('ctSvg').innerHTML=`<defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${lc}" stop-opacity=".2"/><stop offset="100%" stop-color="${lc}" stop-opacity="0"/></linearGradient></defs>
+  <path d="${ad}" fill="url(#cg)"/><path d="${pd}" fill="none" stroke="${lc}" stroke-width="1.8"/>
+  <circle cx="${xC(kl.length-1)}" cy="${yP(last)}" r="3" fill="${lc}"/>
+  <text x="${W-pR}" y="${yP(last)-5}" text-anchor="end" font-family="JetBrains Mono" font-size="9" fill="${lc}">$${last.toLocaleString('en-US',{maximumFractionDigits:0})}</text>
+  <text x="${pL}" y="${H-2}" text-anchor="start" font-family="JetBrains Mono" font-size="9" fill="#4a5a7a">30×1H · ${pSrc}</text>`;
+  document.getElementById('ctSub').textContent=`// ${pSrc} · ${new Date().toLocaleTimeString('id-ID')} · ${btc.klines.length} candles`;
+}
+
+// ═══ GENERATE PLAN ═══
+function genPlan(){
+  const cap=parseFloat(document.getElementById('capital').value)||1000;
+  const sl=parseFloat(document.getElementById('slPct').value)||3;
+  const p=btc.price||75000;
+  const nDir=domDir,rDir=domDir==='Long'?'Short':'Long';
+
+  function ep(dir,s){return dir==='Long'?p*(1+s.offset):p*(1-s.offset);}
+  function slV(dir,e){return dir==='Long'?e*(1-sl/100):e*(1+sl/100);}
+  function tpV(dir,e){return dir==='Long'?e*(1+sl*2/100):e*(1-sl*2/100);}
+
+  function buildCard(dir,label,roi,rCls){
+    const active=STRATS.filter(s=>s.status!=='halted');
+    const halted=STRATS.filter(s=>s.status==='halted');
+    const totP=active.reduce((a,s)=>a+s.allocPct,0);
+    const wP=Math.max(0,100-totP),wU=cap*wP/100;
+    const isL=dir==='Long';
+
+    const segs=active.map((s,i)=>`<div class="aseg" style="width:${s.allocPct}%;background:${TC[i]};opacity:.8"></div>`).join('')
+      +(wP>0?`<div class="aseg" style="width:${wP}%;background:var(--dim)"></div>`:'');
+    const leg=active.map((s,i)=>`<div class="ali"><div class="adot" style="background:${TC[i]}"></div>${s.letter} ${s.allocPct}%</div>`).join('')
+      +(wP>0?`<div class="ali"><div class="adot" style="background:var(--dim)"></div>Wait ${wP.toFixed(0)}%</div>`:'');
+
+    let rows=`<div class="aw"><div class="abar">${segs}</div><div class="aleg">${leg}</div></div>`;
+    let prevT=0;
+
+    active.forEach(s=>{
+      if(s.tier!==prevT){if(prevT>0)rows+=`<div class="tdiv">WAIT BUCKET · TIER ${prevT}</div>`;prevT=s.tier;}
+      const e=ep(dir,s),aU=cap*s.allocPct/100,coin=aU/e,sv=slV(dir,e),tv=tpV(dir,e);
+      const cp=s.maxCtr>0?s.ctr/s.maxCtr*100:0,cc=cp>80?'var(--short)':cp>50?'var(--gold)':'var(--long)';
+      const cls=s.status==='new'?'ns':isL?'ls':'ss',lCls=s.status==='new'?'ns':isL?'ls':'ss';
+      const pid=`p-${dir}-${s.letter}`;
+      rows+=`<div class="st ${cls}">
+        <div class="st-top">
+          <div class="st-id">
+            <span class="sl ${lCls}">${s.letter}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.6rem;color:var(--muted)">#${s.id}</span>
+            <span class="badge ${isL?'bl':'bs'}">${dir}</span>
+            <span class="badge ba">T${s.tier}</span>
+            <span class="badge ${s.status==='new'?'bn':'ba'}">${s.status==='new'?'Kandidat':'Aktif'}</span>
+            <span class="badge be">${s.exit}</span>
+            ${s.trail?'<span class="badge btr">Trail ✓</span>':''}
+          </div>
+          <div class="ep"><div class="ep-l">LIMIT ENTRY</div><div class="ep-v ${isL?'lp':'sp'}">$${e.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>
+        </div>
+        <div class="sg">
+          <div class="sd"><span class="sdl">Modal</span><span class="sdv a">$${aU.toFixed(0)} (${s.allocPct}%)</span></div>
+          <div class="sd"><span class="sdl">BTC Qty</span><span class="sdv">${coin.toFixed(5)}</span></div>
+          <div class="sd"><span class="sdl">Durasi</span><span class="sdv">${s.dur} Hari</span></div>
+          <div class="sd"><span class="sdl">Exit Type</span><span class="sdv b">${s.exit}</span></div>
+          <div class="sd"><span class="sdl">Counter</span><span class="sdv ${cp>80?'r':''}">${s.ctr}/${s.maxCtr||'—'}</span></div>
+          <div class="sd"><span class="sdl">Zona</span><span class="sdv">${s.zone}</span></div>
+        </div>
+        ${s.maxCtr>0?`<div class="ctr"><div class="ctr-t"><div class="ctr-f" style="width:${cp}%;background:${cc}"></div></div><span class="ctr-l">${s.ctr}/${s.maxCtr}</span></div>`:''}
+        <div class="sltp">
+          <div class="slb"><div class="sll">SAFETY STOP</div><div class="slv">$${sv.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="sln">−${sl}% dari entry</div></div>
+          <div class="tpb"><div class="tpl">TAKE PROFIT</div><div class="tpv">$${tv.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="sln">+${(sl*2).toFixed(1)}% · R:R 1:2</div></div>
+        </div>
+        ${s.trail?`<div class="trl">🔒 Trailing Stop: <b>$${s.trail.toLocaleString('en-US',{maximumFractionDigits:0})}</b> — aktif, lindungi profit</div>`:''}
+        <button class="ibtn" onclick="tInfo('${pid}',this)">▼ Keterangan ${s.letter} — ${s.name}</button>
+        <div class="ipanel" id="${pid}">
+          <div class="ip-title">📋 Strategi ${s.letter} (#${s.id}) — ${s.name}</div>
+          <div class="ip-body">${s.desc}</div>
+          <div class="ip-grid">
+            <div class="ip-item"><div class="ip-il">Exit Strategy</div><div class="ip-iv" style="color:var(--blue)">${s.exitDesc}</div></div>
+            <div class="ip-item"><div class="ip-il">Risk Notes</div><div class="ip-iv" style="color:var(--gold)">${s.riskNote}</div></div>
+            <div class="ip-item"><div class="ip-il">Safety Stop Orig.</div><div class="ip-iv" style="color:var(--short)">$${s.safetyOrig.toLocaleString('en-US',{maximumFractionDigits:2})}</div></div>
+            <div class="ip-item"><div class="ip-il">Trailing Stop</div><div class="ip-iv" style="color:var(--purple)">${s.trail?'$'+s.trail.toLocaleString('en-US',{maximumFractionDigits:2}):'Tidak aktif'}</div></div>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    rows+=`<div class="tdiv">HALTED STRATEGIES</div>`;
+    halted.forEach(s=>{
+      const pct=s.ctr/s.maxCtr*100,isH=s.letter==='H',pid=`ph-${dir}-${s.letter}`;
+      rows+=`<div class="st hs">
+        <div class="st-top">
+          <div class="st-id">
+            <span class="sl hs" style="${isH?'color:var(--short)':''}">${s.letter}</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted)">#${s.id}</span>
+            <span class="badge bh">Halted</span><span class="badge bh">T${s.tier}</span>
+            <span class="badge bh">Ctr ${s.ctr}/${s.maxCtr}</span>
+            ${isH?'<span class="badge" style="background:rgba(255,61,90,.14);color:var(--short)">⚠ KRITIS</span>':''}
+          </div>
+          <div class="ep"><div class="ep-l">TIDAK AKTIF</div><div style="font-size:.62rem;color:var(--muted)">${s.exit}</div></div>
+        </div>
+        <div class="ctr"><div class="ctr-t"><div class="ctr-f" style="width:${pct}%;background:${isH?'var(--short)':'var(--muted)'}"></div></div><span class="ctr-l">${pct.toFixed(0)}% terpakai</span></div>
+        <button class="ibtn" onclick="tInfo('${pid}',this)">▼ Keterangan ${s.letter} — ${s.name}</button>
+        <div class="ipanel" id="${pid}">
+          <div class="ip-title">📋 Strategi ${s.letter} (#${s.id}) — ${s.name}</div>
+          <div class="ip-body">${s.desc}</div>
+          <div class="ip-grid">
+            <div class="ip-item"><div class="ip-il">Exit Terakhir</div><div class="ip-iv" style="color:var(--blue)">${s.exitDesc}</div></div>
+            <div class="ip-item"><div class="ip-il">Risk Notes</div><div class="ip-iv" style="color:var(--gold)">${s.riskNote}</div></div>
+          </div>
+        </div>
+      </div>`;
+    });
+
+    rows+=`<div class="tdiv">WAIT BUCKET IDLE</div>
+    <div class="st ws"><div class="st-top">
+      <div class="st-id"><span class="sl" style="color:var(--muted)">—</span><span class="badge bw">Idle</span></div>
+      <div class="ep"><div class="ep-l">BELUM DIALOKASI</div><div class="ep-v" style="color:var(--muted)">$${wU.toFixed(2)}</div></div>
+    </div>
+    <div class="sg"><div class="sd"><span class="sdl">Porsi</span><span class="sdv">${wP.toFixed(1)}%</span></div><div class="sd"><span class="sdl">Deploy ke</span><span class="sdv b">E (#113)</span></div><div class="sd"><span class="sdl">Status</span><span class="sdv a">Siap Deploy</span></div></div>
+    </div>`;
+
+    return `<div class="pc"><div class="pc-head">
+      <div><div class="pc-title" style="color:${isL?'var(--long)':'var(--short)'}">${label}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted);margin-top:2px">${dir} · A–H · ${active.length} aktif · ${halted.length} halted</div></div>
+      <div class="pc-roi ${rCls}">${roi}</div>
+    </div><div class="pc-body">${rows}</div></div>`;
+  }
+
+  document.getElementById('dualPlan').innerHTML=
+    buildCard(nDir,'⚠ Normal Plan','+4.13%','pos')+
+    buildCard(rDir,'↺ Reverse Plan','-0.54%','neg');
+
+  const eq=parseFloat(document.getElementById('equityY').value)||1000;
+  document.getElementById('kpiRow').innerHTML=`
+    <div class="kpi"><div class="kpi-l">Modal</div><div class="kpi-v kva">$${parseFloat(document.getElementById('capital').value).toLocaleString()}</div></div>
+    <div class="kpi"><div class="kpi-l">BTC Live</div><div class="kpi-v kva">$${btc.price.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>
+    <div class="kpi"><div class="kpi-l">Sumber Data</div><div class="kpi-v kvp">${pSrc}</div></div>
+    <div class="kpi"><div class="kpi-l">Sinyal Normal</div><div class="kpi-v ${domDir==='Long'?'kvg':'kvr'}">${domDir==='Long'?'▲ LONG':'▼ SHORT'}</div></div>
+    <div class="kpi"><div class="kpi-l">Sinyal Reverse</div><div class="kpi-v ${domDir==='Long'?'kvr':'kvg'}">${domDir==='Long'?'▼ SHORT':'▲ LONG'}</div></div>
+    <div class="kpi"><div class="kpi-l">Normal ROI (Sim)</div><div class="kpi-v kvg">+4.13%</div></div>
+    <div class="kpi"><div class="kpi-l">Reverse ROI (Sim)</div><div class="kpi-v kvr">-0.54%</div></div>
+    <div class="kpi"><div class="kpi-l">Strategi Aktif</div><div class="kpi-v">A B C D E</div></div>`;
+}
+
+// ═══ LOG + SIM CHART ═══
+function renderLog(){
+  function build(data,id){
+    document.getElementById(id).innerHTML=data.map(r=>{
+      const pct=((r.equity/1000-1)*100).toFixed(2),up=r.equity>=1000,pu=r.pnl>=0;
+      return `<div class="li">
+        <div class="ld">${r.date}</div>
+        <div><div class="ldir ${r.dir==='Long'?'bull':r.dir==='Short'?'bear':'neut'}">${r.dir==='Long'?'▲ Long':r.dir==='Short'?'▼ Short':'— Idle'}</div>
+          <div class="lst">BTC $${r.close.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>
+        <div><div class="lst">WR ${r.wr.toFixed(0)}%</div><div class="lpnl ${pu?'bull':'bear'}">${pu?'+':''}$${r.pnl.toFixed(2)}</div></div>
+        <div class="leq"><div class="leqv ${up?'bull':'bear'}">$${r.equity.toFixed(2)}</div>
+          <div class="lpnl ${up?'bull':'bear'}">${up?'+':''}${pct}%</div></div>
+      </div>`;
+    }).join('');
+  }
+  build(SIM_N,'nLog');build(SIM_R,'rLog');
+  renderStratLeg();
+}
+
+function renderSimChart(){
+  const W=900,H=160,pL=40,pR=12,pT=10,pB=18;
+  const ne=SIM_N.map(r=>r.equity),re=SIM_R.map(r=>r.equity),bc=SIM_N.map(r=>r.close);
+  const av=[...ne,...re],mn=Math.min(...av)-15,mx=Math.max(...av)+15,n=ne.length;
+  const xC=i=>pL+(i/(n-1))*(W-pL-pR),yP=v=>pT+(1-(v-mn)/(mx-mn))*(H-pT-pB);
+  const bMin=Math.min(...bc),bMax=Math.max(...bc),bS=v=>mn+(v-bMin)/(bMax-bMin)*(mx-mn)*.65;
+  const gv=[950,975,1000,1025,1050,1075];
+  const grids=gv.map(v=>{const y=yP(v);return`<line x1="${pL}" x2="${W-pR}" y1="${y}" y2="${y}" class="grid-l" ${v===1000?'stroke-dasharray="4 4"':''}/><text x="${pL-3}" y="${y+3}" text-anchor="end" font-family="JetBrains Mono" font-size="8" fill="${v===1000?'#f5a623':'#4a5a7a'}">${v===1000?'BE':v}</text>`;}).join('');
+  function mp(d){return d.map((v,i)=>`${i===0?'M':'L'}${xC(i)},${yP(v)}`).join(' ');}
+  function ma(d,b){return mp(d)+` L${xC(d.length-1)},${yP(b)} L${xC(0)},${yP(b)} Z`;}
+  const dlbls=SIM_N.filter((_,i)=>i%5===0||i===n-1).map(r=>{const i=SIM_N.indexOf(r);return`<text x="${xC(i)}" y="${H-3}" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5a7a">${r.date}</text>`;}).join('');
+  document.getElementById('simSvg').innerHTML=`<defs>
+    <linearGradient id="gN" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00d68f" stop-opacity=".18"/><stop offset="100%" stop-color="#00d68f" stop-opacity="0"/></linearGradient>
+    <linearGradient id="gR" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ff3d5a" stop-opacity=".12"/><stop offset="100%" stop-color="#ff3d5a" stop-opacity="0"/></linearGradient>
+  </defs>${grids}
+  <path d="${bc.map((v,i)=>`${i===0?'M':'L'}${xC(i)},${yP(bS(v))}`).join(' ')}" fill="none" stroke="#f5a623" stroke-width="1" opacity=".35" stroke-dasharray="3 2"/>
+  <path d="${ma(ne,mn)}" fill="url(#gN)"/>
+  <path d="${ma(re,mn)}" fill="url(#gR)"/>
+  <path d="${mp(ne)}" fill="none" stroke="#00d68f" stroke-width="2"/>
+  <path d="${mp(re)}" fill="none" stroke="#ff3d5a" stroke-width="2"/>
+  <circle cx="${xC(n-1)}" cy="${yP(ne[n-1])}" r="4" fill="#00d68f"/>
+  <circle cx="${xC(n-1)}" cy="${yP(re[n-1])}" r="4" fill="#ff3d5a"/>
+  <text x="${xC(n-1)+8}" y="${yP(ne[n-1])+3}" font-family="JetBrains Mono" font-size="9" fill="#00d68f">$${ne[n-1].toFixed(0)}</text>
+  <text x="${xC(n-1)+8}" y="${yP(re[n-1])+3}" font-family="JetBrains Mono" font-size="9" fill="#ff3d5a">$${re[n-1].toFixed(0)}</text>
+  ${dlbls}`;
+}
+
+function renderStratLeg(){
+  document.getElementById('stratLeg').innerHTML=STRATS.map(s=>`
+    <div style="background:var(--s2);border:1px solid var(--border);border-left:3px solid ${s.color};border-radius:9px;padding:13px 15px">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:800;color:${s.color}">${s.letter}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:.58rem;color:var(--muted)">#${s.id}</span>
+        <span class="badge ${s.status==='active'?'ba':s.status==='new'?'bn':'bh'}">${s.status==='active'?'Aktif':s.status==='new'?'Kandidat':'Halted'}</span>
+        <span class="badge be">${s.exit}</span>
+        <span class="badge" style="background:var(--s3);color:var(--muted)">T${s.tier}</span>
+      </div>
+      <div style="font-weight:700;font-size:.78rem;margin-bottom:4px">${s.name}</div>
+      <div style="font-size:.66rem;color:var(--muted);line-height:1.6">${s.desc}</div>
+      <div style="margin-top:7px;padding:7px 9px;background:var(--s3);border-radius:6px;font-size:.6rem;color:var(--muted)">
+        <b style="color:var(--text)">Exit:</b> ${s.exitDesc}<br>
+        <b style="color:var(--gold)">Risk:</b> ${s.riskNote}
+      </div>
+      ${s.allocPct>0?`<div style="margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:.56rem;color:var(--muted)">Alokasi: <b style="color:var(--gold)">${s.allocPct}%</b> · Counter: <b>${s.ctr}/${s.maxCtr||'—'}</b> · Safety Stop Orig: <b style="color:var(--short)">$${s.safetyOrig.toLocaleString('en-US',{maximumFractionDigits:0})}</b></div>`:''}
+    </div>`).join('');
+}
+
+// ═══ TOGGLE INFO ═══
+function tInfo(id,btn){
+  const el=document.getElementById(id);if(!el)return;
+  el.classList.toggle('open');
+  btn.textContent=el.classList.contains('open')?'▲ Sembunyikan':'▼ Keterangan '+btn.textContent.slice(2);
+}
+
+// ═══ AI CHAT ═══
+const SYS=`Kamu adalah AI Trading Analyst untuk sistem "Decision Sederhana" BTC.
+
+STRATEGI A–H (PENTING HAFAL):
+A (#321) Tier1 Agresif 20.83% · 14 hari · 14Days · counter 1/15 · zona 60-65%
+B (#539) Tier1 Konservatif 20% · 14 hari · 14Days · counter 1/15 · zona 70-75% (unfilled risk)
+C (#168) Tier2 Medium 20.54% · 7 hari · 7Days · counter 5/8 ⚠️ HAMPIR MAXED · Trailing Stop $74,935
+D (#131) Tier3 Panjang 19.11% · 42 hari · %PriceChange14DR · counter 2/42 · Trailing Stop $73,016
+E (#113) Tier3 Kandidat Baru 18.75% · belum entry · %PriceChange14DR
+F (#83) Tier1 Halted · counter 8/15
+G (#477) Tier1 Halted · counter 8/15
+H (#586) Tier1 Halted KRITIS · counter 14/15 HAMPIR EXPIRED
+
+SISTEM:
+- Balancing: A(equity) = B(posisi aktif) + C(limit order) + D(wait bucket sisa)
+- Normal: ikuti sinyal. Reverse: balik arah.
+- Entry via limit order, bukan market.
+- Exit: Fixed Days atau %PriceChange14DR (rolling 14 hari)
+- Safety Stop = harga absolut final. Trailing Stop = ikut profit.
+- Simulasi Real BTC 21Mar–21Apr: Normal +4.13%, Reverse -0.54%
+  (Berbeda dari Excel: Excel Normal -3.15%, Reverse +3.65%)
+
+Jawab Bahasa Indonesia, konkret, sertakan angka.`;
+
+let hist=[];
+async function sendMsg(){const i=document.getElementById('cinp'),m=i.value.trim();if(!m)return;i.value='';addMsg('user',m);await askAI(m);}
+function qa(p){setTab('ai');setTimeout(()=>{document.getElementById('cinp').value=p;sendMsg();},150);}
+function addMsg(role,text){
+  const el=document.getElementById('cms'),d=document.createElement('div');d.className='msg '+role;
+  const av=document.createElement('div');av.className='av '+(role==='ai'?'aia':'ua');av.textContent=role==='ai'?'🧠':'👤';
+  const b=document.createElement('div');b.className='bub';b.innerHTML=text.replace(/\*\*(.*?)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\n/g,'<br>');
+  d.appendChild(av);d.appendChild(b);el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+function showTyp(){const el=document.getElementById('cms'),d=document.createElement('div');d.className='msg ai';d.id='typ';d.innerHTML=`<div class="av aia">🧠</div><div class="typ"><div class="td2"></div><div class="td2"></div><div class="td2"></div></div>`;el.appendChild(d);el.scrollTop=el.scrollHeight;}
+function hideTyp(){const e=document.getElementById('typ');if(e)e.remove();}
+async function askAI(msg){
+  document.getElementById('sbtn').disabled=true;showTyp();
+  const ctx=`[DATA ${new Date().toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}]
+BTC: $${btc.price.toLocaleString('en-US',{maximumFractionDigits:0})} (${btc.chg>=0?'+':''}${btc.chg.toFixed(2)}%)
+High/Low: $${btc.high.toLocaleString('en-US',{maximumFractionDigits:0})}/$${btc.low.toLocaleString('en-US',{maximumFractionDigits:0})}
+RSI:${inds.rsi.toFixed(1)} MACD:${inds.macd.toFixed(0)} EMA20/50:${inds.ema20.toFixed(0)}/${inds.ema50.toFixed(0)}
+BB Upper/Lower:${inds.bbU.toFixed(0)}/${inds.bbL.toFixed(0)}
+Sinyal:${domDir} score ${confScore}/5 | Sumber:${pSrc}
+
+${msg}`;
+  hist.push({role:'user',content:ctx});
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SYS,messages:hist.slice(-10)})});
+    const data=await res.json();
+    const reply=data.content?.[0]?.text||'Tidak ada respons.';
+    hist.push({role:'assistant',content:reply});
+    hideTyp();addMsg('ai',reply);
+  }catch(e){hideTyp();addMsg('ai','⚠️ Gagal connect ke Claude API.');}
+  document.getElementById('sbtn').disabled=false;
+}
+
+// ═══ INIT ═══
+(async()=>{await fetchPrice();genPlan();setInterval(fetchPrice,30000);})();
+</script>
+</body>
+</html>
